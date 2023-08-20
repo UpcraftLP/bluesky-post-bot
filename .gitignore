@@ -1,0 +1,20 @@
+# .NET
+bin/
+obj/
+/packages/
+*.DotSettings.user
+appsettings.Development.json
+
+# Visual Studio Code
+.vscode/
+.vs/
+
+# Rider / IntelliJ
+riderModule.iml
+/_ReSharper.Caches/
+.idea/
+
+# Misc
+.data/
+.tmp/
+
