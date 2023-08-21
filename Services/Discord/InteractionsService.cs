@@ -4,24 +4,21 @@ using Discord.Addons.Hosting;
 using Discord.Addons.Hosting.Util;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.Options;
-using DiscordConfig = Up.Bsky.PostBot.Util.Config.DiscordConfig;
 using IResult = Discord.Interactions.IResult;
 
 namespace Up.Bsky.PostBot.Services.Discord;
 
 public class InteractionsService : DiscordClientService
 {
-    private readonly DiscordConfig _config;
     private readonly InteractionService _interactionService;
-
     private readonly IServiceProvider _services;
+    private readonly IHostEnvironment _env;
 
-    public InteractionsService(DiscordSocketClient client, ILogger<InteractionsService> logger, IServiceProvider services, InteractionService interactionService, IOptions<DiscordConfig> config) : base(client, logger)
+    public InteractionsService(DiscordSocketClient client, ILogger<InteractionsService> logger, IServiceProvider services, InteractionService interactionService, IHostEnvironment env) : base(client, logger)
     {
         _services = services;
         _interactionService = interactionService;
-        _config = config.Value;
+        _env = env;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,13 +35,19 @@ public class InteractionsService : DiscordClientService
         await _interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 
         await Client.WaitForReadyAsync(stoppingToken);
-        // await _interactionService.RegisterCommandsToGuildAsync(_config.GuildId);
 
         // to delete commands: ! comment out the AddModulesAsync() call !
-        // await _interactionService.AddCommandsGloballyAsync(true);
-        // await _interactionService.RegisterCommandsToGuildAsync(_config.GuildId);
-
-
+        if (_env.IsDevelopment())
+        {
+            foreach (var guild in Client.Guilds)
+            {
+                await _interactionService.RegisterCommandsToGuildAsync(guild.Id);
+            }
+        }
+        else
+        {
+            await _interactionService.AddCommandsGloballyAsync(true);
+        }
     }
 
     # region Execution

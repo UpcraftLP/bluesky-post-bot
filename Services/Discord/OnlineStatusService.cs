@@ -7,20 +7,32 @@ namespace Up.Bsky.PostBot.Services.Discord;
 
 public class OnlineStatusService : DiscordClientService
 {
-    public OnlineStatusService(DiscordSocketClient client, ILogger<OnlineStatusService> logger) : base(client, logger)
+    private readonly IServiceProvider _serviceProvider;
+    
+    public OnlineStatusService(DiscordSocketClient client, ILogger<OnlineStatusService> logger, IServiceProvider serviceProvider) : base(client, logger)
     {
+        _serviceProvider = serviceProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        Client.CurrentUserUpdated += (oldUser, newUser) =>
+        Client.CurrentUserUpdated += async (oldUser, newUser) =>
         {
-            Logger.LogInformation("Setting user [{Username}#{Discriminator}]", newUser.Username, newUser.Discriminator);
-            return Task.CompletedTask;
+            await UpdateClient(newUser);
         };
 
         await Client.WaitForReadyAsync(cancellationToken);
-        Logger.LogInformation("Client reported ready - Current user [{Name}#{Discriminator}]", Client.CurrentUser.Username, Client.CurrentUser.Discriminator);
-        await Client.SetStatusAsync(UserStatus.Online);
+        Logger.LogInformation("Client reported ready");
+        await UpdateClient(Client.CurrentUser);
+        
+        await Task.Delay(-1, cancellationToken);
+    }
+
+    private async Task UpdateClient(IUser user)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        Logger.LogInformation("Setting user [{Username}#{Discriminator}]", user.Username, user.Discriminator);
+        var updateStatusService = scope.ServiceProvider.GetRequiredService<IUpdateStatusService>();
+        await updateStatusService.UpdateStatus();
     }
 }

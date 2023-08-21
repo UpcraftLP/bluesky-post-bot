@@ -70,10 +70,12 @@ builder.Host.UseInteractionService((_, config) =>
     config.UseCompiledLambda = true;
     config.AutoServiceScopes = true;
 });
+builder.Services.AddScoped<IUpdateStatusService, UpdateStatusService>();
 
 builder.Services.AddHostedService<FetchPostsBackgroundService>();
 builder.Services.AddHostedService<OnlineStatusService>();
 builder.Services.AddHostedService<InteractionsService>();
+builder.Services.AddHostedService<JoinMessageService>();
 
 var app = builder.Build();
 app.UseAuthorization();

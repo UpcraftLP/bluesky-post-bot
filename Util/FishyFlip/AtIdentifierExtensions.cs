@@ -16,4 +16,9 @@ public static class AtIdentifierExtensions
             var _ => throw new ArgumentException($"Unexpected type: {self.GetType().Name}"),
         };
     }
+
+    public static Uri ToBskyUri(this ATIdentifier self)
+    {
+        return new Uri($"https://bsky.app/profile/{self}");
+    }
 }
