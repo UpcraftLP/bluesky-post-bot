@@ -22,11 +22,11 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
 
         var handle = ATHandle.Create("cammiescorner.dev")!;
         var did = await handle.Resolve(atProto, cancellationToken);
-        
+
         var latestPost = await dbContext.SeenPosts.Where(it => it.UserDid == did.ToString()).OrderBy(it => it.CreatedAt).FirstOrDefaultAsync(cancellationToken);
 
         var posts = await fetchService.FetchPostsSince(did, latestPost?.AtUri, false, cancellationToken);
-        
+
         Console.WriteLine($"Found {posts.Count} new posts!");
     }
 }

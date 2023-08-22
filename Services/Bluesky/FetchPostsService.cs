@@ -1,6 +1,7 @@
 ﻿using FishyFlip;
 using FishyFlip.Models;
 using FishyFlip.Tools;
+using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Util.FishyFlip;
 
@@ -50,7 +51,7 @@ public class FetchPostsService : IFetchPostsService
                     goto End;
                 }
 
-                if (await _dbContext.SeenPosts.FindAsync(new object?[] {atUri.ToString()}, cancellationToken) != null)
+                if (await _dbContext.SeenPosts.AnyAsync(it => it.AtUri == atUri.ToString(), cancellationToken))
                 {
                     continue;
                 }
