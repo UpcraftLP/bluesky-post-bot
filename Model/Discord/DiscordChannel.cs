@@ -14,5 +14,7 @@ public class DiscordChannel
     [Required]
     public ulong ServerId { get; set; }
     
+    public ulong WebhookId { get; set; }
+    
     public virtual ICollection<BskyUser> TrackedUsers { get; set; } = new List<BskyUser>();
 }

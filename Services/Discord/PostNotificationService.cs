@@ -1,10 +1,12 @@
 ﻿using Discord;
+using Discord.Webhook;
 using Discord.WebSocket;
 using FishyFlip;
 using FishyFlip.Tools;
 using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Discord.DTO;
+using Up.Bsky.PostBot.Util;
 using Up.Bsky.PostBot.Util.FishyFlip;
 
 namespace Up.Bsky.PostBot.Services.Discord;
@@ -39,21 +41,33 @@ public class PostNotificationService : IPostNotificationService
             throw new ApplicationException($"User profile for {post.User.DidObject.ToBskyUri()} does not exist!");
         }
         
+        var embed = new EmbedBuilder()
+            .WithAuthor(userProfile.DisplayName, userProfile.Avatar, post.AtUri.ToBskyUri().ToString())
+            .WithDescription(post.Text)
+            .WithTimestamp(post.CreatedAt)
+            .Build();
+        
         foreach (var channel in channels)
         {
-            var embed = new EmbedBuilder()
-                .WithAuthor(userProfile.DisplayName, userProfile.Avatar, post.AtUri.ToBskyUri().ToString())
-                .WithDescription(post.Text)
-                .WithTimestamp(post.CreatedAt)
-                .Build();
             if (await _client.GetChannelAsync(channel.ChannelId) is not ITextChannel discordChannel)
             {
                 _logger.LogWarning("Channel {ChannelId} for guild {GuildId} not found or is not a text channel!", channel.ChannelId, channel.ServerId);
                 continue;
             }
             
-            //TODO send as webhook
-            await discordChannel.SendMessageAsync(embed: embed);
+            // make sure webhook exists
+            var webhook = channel.WebhookId == 0 ? null : await discordChannel.GetWebhookAsync(channel.WebhookId);
+            if (webhook == null)
+            {
+                _logger.LogDebug("Webhook for channel {ChannelId} not found, creating new webhook...", channel.ChannelId);
+                webhook = await discordChannel.CreateWebhookAsync(AppConstants.AppName);
+                channel.WebhookId = webhook.Id;
+                _dbContext.Update(channel);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+
+            using var webhookClient = new DiscordWebhookClient(webhook);
+            await webhookClient.SendMessageAsync(username: userProfile.DisplayName, embeds: new[] {embed}, avatarUrl: userProfile.Avatar);
         }
     }
 }
