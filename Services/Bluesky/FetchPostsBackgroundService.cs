@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
+using Up.Bsky.PostBot.Model.Bluesky;
 using Up.Bsky.PostBot.Services.Discord;
 using Up.Bsky.PostBot.Util;
 
@@ -34,14 +35,14 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
         foreach (var response in posts)
         {
             await notificationService.NotifyNewPost(response, cancellationToken);
-            // dbContext.SeenPosts.Update(new PostEntry
-            // {
-            //     AtUri = response.AtUri.ToString(),
-            //     CreatedAt = response.CreatedAt,
-            //     User = response.User,
-            // });
+            dbContext.SeenPosts.Update(new PostEntry
+            {
+                AtUri = response.AtUri.ToString(),
+                CreatedAt = response.CreatedAt,
+                User = response.User,
+            });
         }
-        // await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         Logger.LogInformation("Done!");
     }
 }
