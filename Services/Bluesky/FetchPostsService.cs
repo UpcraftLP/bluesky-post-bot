@@ -42,6 +42,11 @@ public class FetchPostsService : IFetchPostsService
             {
                 var post = record.Post;
                 var atUri = record.AtUri;
+                
+                if(atUri.Rkey == lastPostId)
+                {
+                    goto End;
+                }
 
                 if (await _dbContext.SeenPosts.AnyAsync(it => it.AtUri == atUri.ToString(), cancellationToken))
                 {
@@ -53,6 +58,7 @@ public class FetchPostsService : IFetchPostsService
 
             cursor = result.Cursor;
         } while (cursor != null);
+        End:
 
         // reverse order so oldest posts are first
         return list.OrderBy(it => it.CreatedAt).ToList();
