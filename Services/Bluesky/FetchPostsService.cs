@@ -28,41 +28,33 @@ public class FetchPostsService : IFetchPostsService
     public async Task<IList<FetchPostsResponse>> FetchPostsSince(BskyUser user, string? lastPostId, bool includeReplies = false, CancellationToken cancellationToken = default)
     {
         var list = new List<FetchPostsResponse>();
-
         string? cursor = null;
-        while (true)
+        do
         {
             var result = (await _atProto.Repo.ListPostAsync(user.DidObject, 100, cursor, true, cancellationToken)).HandleResult()!;
-            if (result.Records.Length == 0)
+            var query = result.Records.Select(it => new {AtUri = it.Uri!, Post = (Post) it.Value!});
+            if (!includeReplies)
             {
-                goto End;
+                query = query.Where(it => it.Post.Reply == null);
             }
-            foreach (
-                var record in result.Records.Select(it => new {AtUri = it.Uri!, Post = (Post) it.Value!})
-                    .Where(it => includeReplies || it.Post.Reply == null)
-                    .OrderByDescending(it => it.Post.CreatedAt!.Value)
-            )
+            query = query.OrderByDescending(it => it.Post.CreatedAt!.Value);
+            foreach (var record in query)
             {
                 var post = record.Post;
                 var atUri = record.AtUri;
-
-                if (atUri.Rkey == lastPostId)
-                {
-                    goto End;
-                }
 
                 if (await _dbContext.SeenPosts.AnyAsync(it => it.AtUri == atUri.ToString(), cancellationToken))
                 {
                     continue;
                 }
-                
+
                 list.Add(new FetchPostsResponse(user, atUri, post.CreatedAt!.Value, post.GetRichText(), post.Embed));
             }
 
             cursor = result.Cursor;
-        }
-        End:
+        } while (cursor != null);
 
-        return list.OrderByDescending(it => it.CreatedAt).ToList();
+        // reverse order so oldest posts are first
+        return list.OrderBy(it => it.CreatedAt).ToList();
     }
 }

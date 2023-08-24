@@ -54,6 +54,7 @@ public class PostNotificationService : IPostNotificationService
 
         if (post.Embed != null)
         {
+            //TODO handle embeds
             Console.WriteLine($"Embed: {post.Embed}");
         }
 
