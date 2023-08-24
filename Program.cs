@@ -71,6 +71,7 @@ builder.Host.UseInteractionService((_, config) =>
     config.AutoServiceScopes = true;
 });
 builder.Services.AddScoped<IUpdateStatusService, UpdateStatusService>();
+builder.Services.AddScoped<IPostNotificationService, PostNotificationService>();
 
 builder.Services.AddHostedService<FetchPostsBackgroundService>();
 builder.Services.AddHostedService<OnlineStatusService>();

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Up.Bsky.PostBot.Model.Bluesky;
 
-namespace Up.Bsky.PostBot.Model;
+namespace Up.Bsky.PostBot.Model.Discord;
 
 public class DiscordChannel
 {

@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using FishyFlip.Models;
 
-namespace Up.Bsky.PostBot.Model;
+namespace Up.Bsky.PostBot.Model.Bluesky;
 
 public class PostEntry
 {

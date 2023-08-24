@@ -5,11 +5,14 @@ using FishyFlip.Models;
 using FishyFlip.Tools;
 using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
-using Up.Bsky.PostBot.Model;
+using Up.Bsky.PostBot.Model.Bluesky;
+using Up.Bsky.PostBot.Model.Discord;
+using Up.Bsky.PostBot.Services.Bluesky;
 
 namespace Up.Bsky.PostBot.Util.Discord.Commands;
 
-public class FollowCommand: InteractionModuleBase<SocketInteractionContext>
+//TODO add list command for server owners
+public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ATProtocol _atClient;
@@ -66,16 +69,32 @@ public class FollowCommand: InteractionModuleBase<SocketInteractionContext>
             return;
         }
 
-        var user = await dbContext.TrackedUsers.FirstOrDefaultAsync(it => it.Did == result.Did.ToString()) ?? new BskyUser
+        var user = await dbContext.TrackedUsers.FirstOrDefaultAsync(it => it.Did == result.Did.ToString());
+
+        if (user == null)
         {
-            Did = result.Did.ToString(),
-        };
+            user = new BskyUser
+            {
+                Did = result.Did.ToString(),
+            };
+            dbContext.TrackedUsers.Update(user);
+            
+            // fetch previous posts by that user so we don't notify about those
+            var postsService = scope.ServiceProvider.GetRequiredService<FetchPostsService>();
+            var allPosts = await postsService.FetchPostsSince(user, null);
+
+            dbContext.SeenPosts.UpdateRange(allPosts.Select(p => new PostEntry()
+            {
+                AtUri = p.AtUri.ToString(),
+                User = user,
+                CreatedAt = p.CreatedAt,
+            }));
+        }
 
         channelDbObject.TrackedUsers.Add(user);
-
         dbContext.DiscordChannels.Update(channelDbObject);
-        await dbContext.SaveChangesAsync();
 
+        await dbContext.SaveChangesAsync();
         await FollowupAsync($"Successfully subscribed to [@{result.Handle}](https://bsky.app/profile/{result.Did}), events will be sent to {targetChannel.Mention}", ephemeral: true);
     }
 }

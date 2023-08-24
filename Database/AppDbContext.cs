@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Up.Bsky.PostBot.Model;
+using Up.Bsky.PostBot.Model.Bluesky;
+using Up.Bsky.PostBot.Model.Discord;
 
 namespace Up.Bsky.PostBot.Database;
 

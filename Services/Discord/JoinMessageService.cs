@@ -36,6 +36,8 @@ public class JoinMessageService : DiscordClientService
             Logger.LogInformation("Bot left guild ({GuildId}): {GuildName}", guild.Id, guild.Name);
             var updateStatusService = scope.ServiceProvider.GetRequiredService<IUpdateStatusService>();
             await updateStatusService.UpdateStatus(stoppingToken);
+            
+            //TODO remove all channels in guild from DB, remove all unused users from DB, remove all orphan posts from DB
         };
         await Task.Delay(-1, stoppingToken);
     }
