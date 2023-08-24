@@ -57,7 +57,7 @@ public class FetchPostsService : IFetchPostsService
             }
 
             cursor = result.Cursor;
-        } while (cursor != null);
+        } while (!string.IsNullOrEmpty(cursor));
         End:
 
         // reverse order so oldest posts are first
