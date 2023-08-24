@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Bluesky;
 using Up.Bsky.PostBot.Model.Discord.DTO;
+using Up.Bsky.PostBot.Util.FishyFlip;
 
 namespace Up.Bsky.PostBot.Services.Bluesky;
 
@@ -54,7 +55,8 @@ public class FetchPostsService : IFetchPostsService
                 {
                     continue;
                 }
-                list.Add(new FetchPostsResponse(user, atUri, post.CreatedAt!.Value, post.Text, post.Embed));
+                
+                list.Add(new FetchPostsResponse(user, atUri, post.CreatedAt!.Value, post.GetRichText(), post.Embed));
             }
 
             cursor = result.Cursor;

@@ -40,12 +40,24 @@ public class PostNotificationService : IPostNotificationService
         {
             throw new ApplicationException($"User profile for {post.User.DidObject.ToBskyUri()} does not exist!");
         }
-        
-        var embed = new EmbedBuilder()
-            .WithAuthor(userProfile.DisplayName, userProfile.Avatar, post.AtUri.ToBskyUri().ToString())
-            .WithDescription(post.Text)
+
+        var authorName = userProfile.DisplayName;
+        var embedBuilder = new EmbedBuilder()
+            .WithAuthor(authorName, userProfile.Avatar, post.AtUri.ToBskyUri().ToString())
             .WithTimestamp(post.CreatedAt)
-            .Build();
+            .WithFooter(new EmbedFooterBuilder().WithText($"Powered by {AppConstants.AppName}"));
+        
+        if (post.Text != null)
+        {
+            embedBuilder.WithDescription(post.Text);
+        }
+
+        if (post.Embed != null)
+        {
+            Console.WriteLine($"Embed: {post.Embed}");
+        }
+
+        var embed = embedBuilder.Build();
         
         foreach (var channel in channels)
         {
@@ -67,7 +79,7 @@ public class PostNotificationService : IPostNotificationService
             }
 
             using var webhookClient = new DiscordWebhookClient(webhook);
-            await webhookClient.SendMessageAsync(username: userProfile.DisplayName, embeds: new[] {embed}, avatarUrl: userProfile.Avatar);
+            await webhookClient.SendMessageAsync(username: authorName, embeds: new[] {embed}, avatarUrl: userProfile.Avatar);
         }
     }
 }
