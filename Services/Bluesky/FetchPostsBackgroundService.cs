@@ -19,7 +19,8 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var notificationService = scope.ServiceProvider.GetRequiredService<IPostNotificationService>();
 
-        var users = await dbContext.TrackedUsers.Include(it => it.Posts).ToListAsync(cancellationToken);
+        // only fetch users that are being tracked in at least 1 channel
+        var users = await dbContext.TrackedUsers.Include(it => it.Posts).Where(u => u.TrackedInChannels.Count > 0).ToListAsync(cancellationToken);
 
         var posts = (await Task.WhenAll(users.Select(async user =>
         {

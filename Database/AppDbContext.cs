@@ -23,6 +23,6 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<BskyUser>().HasIndex(it => it.Did).IsUnique();
         
         modelBuilder.Entity<DiscordChannel>().HasIndex(it => it.ChannelId).IsUnique();
-        modelBuilder.Entity<DiscordChannel>().HasMany(it => it.TrackedUsers).WithMany();
+        modelBuilder.Entity<DiscordChannel>().HasMany(it => it.TrackedUsers).WithMany(it => it.TrackedInChannels);
     }
 }

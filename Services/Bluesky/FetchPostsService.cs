@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Bluesky;
 using Up.Bsky.PostBot.Model.Discord.DTO;
-using Up.Bsky.PostBot.Util.FishyFlip;
 
 namespace Up.Bsky.PostBot.Services.Bluesky;
 
