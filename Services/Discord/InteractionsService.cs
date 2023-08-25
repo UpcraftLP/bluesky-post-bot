@@ -46,7 +46,7 @@ public class InteractionsService : DiscordClientService
         }
         else
         {
-            await _interactionService.AddCommandsGloballyAsync(true);
+            await _interactionService.RegisterCommandsGloballyAsync();
         }
     }
 
