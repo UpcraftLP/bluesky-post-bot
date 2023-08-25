@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Addons.Hosting.Util;
 using Discord.Webhook;
 using Discord.WebSocket;
 using FishyFlip;
@@ -33,6 +34,7 @@ public class PostNotificationService : IPostNotificationService
 
     public async Task NotifyNewPost(FetchPostsResponse post, CancellationToken cancellationToken = default)
     {
+        await _client.WaitForReadyAsync(cancellationToken);
         var channels = await _dbContext.DiscordChannels.Where(it => it.TrackedUsers.Contains(post.User)).ToListAsync(cancellationToken);
         
         var userProfile = (await _atProto.Actor.GetProfileAsync(post.User.DidObject, cancellationToken)).HandleResult();
