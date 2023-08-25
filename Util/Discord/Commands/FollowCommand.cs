@@ -80,7 +80,7 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
             dbContext.TrackedUsers.Update(user);
             
             // fetch previous posts by that user so we don't notify about those
-            var postsService = scope.ServiceProvider.GetRequiredService<FetchPostsService>();
+            var postsService = scope.ServiceProvider.GetRequiredService<IFetchPostsService>();
             var allPosts = await postsService.FetchPostsSince(user, null);
 
             dbContext.SeenPosts.UpdateRange(allPosts.Select(p => new PostEntry()
