@@ -29,6 +29,12 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
             var latestPost = user.Posts.MinBy(it => it.CreatedAt);
             return await fetchService.FetchPostsSince(user, latestPost?.AtUri, false, cancellationToken);
         }))).SelectMany(it => it).ToList();
+
+        if (posts.Count == 0)
+        {
+            Logger.LogInformation("No new posts found since last check");
+            return;
+        }
         
         Logger.LogInformation("Found {Posts} new posts! Sending notifications...", posts.Count);
         
