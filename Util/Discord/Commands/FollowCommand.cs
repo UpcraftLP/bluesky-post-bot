@@ -8,10 +8,10 @@ using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Bluesky;
 using Up.Bsky.PostBot.Model.Discord;
 using Up.Bsky.PostBot.Services.Bluesky;
+using Up.Bsky.PostBot.Util.FishyFlip;
 
 namespace Up.Bsky.PostBot.Util.Discord.Commands;
 
-//TODO add list command for server owners
 public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
 {
     private readonly IServiceProvider _serviceProvider;
@@ -23,8 +23,8 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
         _atClient = atClient;
     }
 
-    [SlashCommand("follow", "Follow a bluesky user")]
     [DefaultMemberPermissions(GuildPermission.ManageWebhooks)]
+    [SlashCommand("follow", "Follow a bluesky user")]
     public async Task StartTrackingAsync(string blueskyUser, ITextChannel? channel = null)
     {
         if (channel == null && Context.Channel.GetChannelType()! != ChannelType.Text)
@@ -96,5 +96,49 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
 
         await dbContext.SaveChangesAsync();
         await FollowupAsync($"Successfully subscribed to [@{result.Handle}](https://bsky.app/profile/{result.Did}), events will be sent to {targetChannel.Mention}", ephemeral: true);
+    }
+
+    [DefaultMemberPermissions(GuildPermission.ManageWebhooks)]
+    [SlashCommand("follow-list", "List all followed users")]
+    public async Task ListUsersAsync()
+    {
+        await DeferAsync();
+        
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var channels = await dbContext.DiscordChannels.Include(channel => channel.TrackedUsers).Where(it => it.ServerId == Context.Guild.Id).ToListAsync();
+        var userProfiles = new Dictionary<string, string>();
+        
+        // step 1 gather all user profiles
+        foreach (var didArray in channels.Select(channel => channel.TrackedUsers.Where(it => !userProfiles.ContainsKey(it.Did)).Select(it => (ATIdentifier) it.DidObject).ToArray()))
+        {
+            var result = (await _atClient.Actor.GetProfilesAsync(didArray)).HandleResult()!;
+            foreach (var feedProfile in result.Profiles!)
+            {
+                userProfiles[feedProfile.Did.ToString()] = feedProfile.Handle;
+            }
+        }
+
+        var allEmbeds = channels.Select(channel =>
+        {
+            var lines = channel.TrackedUsers.Select(user => $"\t[@{userProfiles[user.Did]}]({user.DidObject.ToBskyUri()})");
+            return new EmbedBuilder().WithTitle($"Following {channel.TrackedUsers.Count} users in {MentionUtils.MentionChannel(channel.ChannelId)}:")
+                .WithDescription(string.Join("\n", lines))
+                .Build();
+        });
+        var first = true;
+        foreach (var embeds in allEmbeds.Chunk(5))
+        {
+            if (first)
+            {
+                await FollowupAsync(embeds:embeds);
+                first = false;
+            }
+            else
+            {
+                await Context.Channel.SendMessageAsync(embeds: embeds);
+            }
+        }
     }
 }
