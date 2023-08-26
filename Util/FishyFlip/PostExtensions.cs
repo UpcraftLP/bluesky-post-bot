@@ -67,8 +67,6 @@ public static partial class PostExtensions
         // Append text after the last facet
         sb.Append(Encoding.UTF8.GetString(bytes[idx..]));
 
-        var result = HashtagsToLinksRegex().Replace(sb.ToString(), "[$0](https://bsky.app/search?q=%23$1)");
-        
-        return result;
+        return HashtagsToLinksRegex().Replace(sb.ToString(), "[$0](https://bsky.app/search?q=%23$1)");
     }
 }
