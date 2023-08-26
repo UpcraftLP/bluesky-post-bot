@@ -113,6 +113,11 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
         // step 1 gather all user profiles
         foreach (var didArray in channels.Select(channel => channel.TrackedUsers.Where(it => !userProfiles.ContainsKey(it.Did)).Select(it => (ATIdentifier) it.DidObject).ToArray()))
         {
+            if (didArray.Length == 0)
+            {
+                // skip empty arrays
+                continue;
+            }
             var result = (await _atClient.Actor.GetProfilesAsync(didArray)).HandleResult()!;
             foreach (var feedProfile in result.Profiles!)
             {
@@ -120,6 +125,7 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
             }
         }
 
+        // step 2 construct embeds
         var allEmbeds = channels.Select(channel =>
         {
             var lines = channel.TrackedUsers.Select(user => $"\t[@{userProfiles[user.Did]}]({user.DidObject.ToBskyUri()})");
@@ -128,6 +134,8 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
                 .PoweredBy()
                 .Build();
         });
+        
+        // step 3 send embeds in chunks of 5 because of discord limits
         var first = true;
         foreach (var embeds in allEmbeds.Chunk(5))
         {
