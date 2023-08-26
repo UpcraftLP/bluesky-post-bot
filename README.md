@@ -2,7 +2,7 @@
 
 A discord bot to listen for posts on bluesky and repost them in a discord channel
 
-[![Latest Release](https://img.shields.io/github/v/tag/upcraftlp/bluesky-post-bot?style=for-the-badge&logo=Docker&label=Latest%20Release)](ghcr.io/upcraftlp/bluesky-post-bot "View on GHCR.io")
+[![Latest Release](https://img.shields.io/github/v/tag/upcraftlp/bluesky-post-bot?style=for-the-badge&logo=Docker&label=Latest%20Release)](https://ghcr.io/upcraftlp/bluesky-post-bot "View on GHCR.io")
 
 
 ## How to use
