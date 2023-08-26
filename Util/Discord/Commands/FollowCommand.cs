@@ -107,7 +107,7 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var channels = await dbContext.DiscordChannels.Include(channel => channel.TrackedUsers).Where(it => it.ServerId == Context.Guild.Id).ToListAsync();
+        var channels = await dbContext.DiscordChannels.Include(channel => channel.TrackedUsers).Where(it => it.ServerId == Context.Guild.Id && it.TrackedUsers.Count > 0).ToListAsync();
         var userProfiles = new Dictionary<string, string>();
 
         // step 1 gather all user profiles
@@ -185,7 +185,14 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
         foreach (var channel in channels)
         {
             channel.TrackedUsers.Remove(user);
-            dbContext.DiscordChannels.Update(channel);
+            if (channel.TrackedUsers.Count == 0)
+            {
+                dbContext.DiscordChannels.Remove(channel);
+            }
+            else
+            {
+                dbContext.DiscordChannels.Update(channel);
+            }
         }
 
         if (user.TrackedInChannels.Count == 0)
