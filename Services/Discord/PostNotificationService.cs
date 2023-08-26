@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Discord.DTO;
 using Up.Bsky.PostBot.Util;
+using Up.Bsky.PostBot.Util.Discord;
 using Up.Bsky.PostBot.Util.FishyFlip;
 
 namespace Up.Bsky.PostBot.Services.Discord;
@@ -47,7 +48,7 @@ public class PostNotificationService : IPostNotificationService
         var embedBuilder = new EmbedBuilder()
             .WithAuthor(authorName, userProfile.Avatar, post.AtUri.ToBskyUri().ToString())
             .WithTimestamp(post.CreatedAt)
-            .WithFooter(new EmbedFooterBuilder().WithText($"Powered by {AppConstants.AppName}"));
+            .PoweredBy();
         
         if (post.Text != null)
         {

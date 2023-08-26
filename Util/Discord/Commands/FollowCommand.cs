@@ -125,6 +125,7 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
             var lines = channel.TrackedUsers.Select(user => $"\t[@{userProfiles[user.Did]}]({user.DidObject.ToBskyUri()})");
             return new EmbedBuilder().WithTitle($"Following {channel.TrackedUsers.Count} users in {MentionUtils.MentionChannel(channel.ChannelId)}:")
                 .WithDescription(string.Join("\n", lines))
+                .PoweredBy()
                 .Build();
         });
         var first = true;
