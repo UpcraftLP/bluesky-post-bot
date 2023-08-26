@@ -23,6 +23,6 @@ public class InviteCommand : InteractionModuleBase<SocketInteractionContext>
             | GuildPermission.AddReactions
         );
 
-        await RespondAsync($"https://discord.com/api/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&permissions={requiredPermissions.Permission}&scope={string.Join("%20", requiredPermissions.Scopes)}", ephemeral: true);
+        await RespondAsync($"https://discord.com/api/oauth2/authorize?client_id={Context.Client.CurrentUser.Id}&permissions={(int) requiredPermissions.Permission}&scope={string.Join("%20", requiredPermissions.Scopes)}", ephemeral: true);
     }
 }
