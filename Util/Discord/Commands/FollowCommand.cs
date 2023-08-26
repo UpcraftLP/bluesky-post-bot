@@ -78,7 +78,7 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
                 Did = result.Did.ToString(),
             };
             dbContext.TrackedUsers.Update(user);
-            
+
             // fetch previous posts by that user so we don't notify about those
             var postsService = scope.ServiceProvider.GetRequiredService<IFetchPostsService>();
             var allPosts = await postsService.FetchPostsSince(user, null);
@@ -103,13 +103,13 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
     public async Task ListUsersAsync()
     {
         await DeferAsync();
-        
+
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         var channels = await dbContext.DiscordChannels.Include(channel => channel.TrackedUsers).Where(it => it.ServerId == Context.Guild.Id).ToListAsync();
         var userProfiles = new Dictionary<string, string>();
-        
+
         // step 1 gather all user profiles
         foreach (var didArray in channels.Select(channel => channel.TrackedUsers.Where(it => !userProfiles.ContainsKey(it.Did)).Select(it => (ATIdentifier) it.DidObject).ToArray()))
         {
@@ -133,7 +133,7 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
         {
             if (first)
             {
-                await FollowupAsync(embeds:embeds);
+                await FollowupAsync(embeds: embeds);
                 first = false;
             }
             else
@@ -141,5 +141,57 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
                 await Context.Channel.SendMessageAsync(embeds: embeds);
             }
         }
+    }
+
+    [DefaultMemberPermissions(GuildPermission.ManageWebhooks)]
+    [SlashCommand("follow-remove", "Stop following a bluesky user")]
+    public async Task StopTrackingAsync(string blueskyUser)
+    {
+        await DeferAsync(ephemeral: true);
+
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var id = ATIdentifier.Create(blueskyUser);
+        if (id == null)
+        {
+            await FollowupAsync($"Not a valid ATProtocol identifier: {blueskyUser}", ephemeral: true);
+            return;
+        }
+        var atDid = await id.AsDid(_atClient);
+
+        var user = await dbContext.TrackedUsers.FirstOrDefaultAsync(it => it.Did == atDid.ToString());
+        if (user == null)
+        {
+            await FollowupAsync($"Not following {blueskyUser}!", ephemeral: true);
+            return;
+        }
+
+        var channels = await dbContext.DiscordChannels.Include(it => it.TrackedUsers).Where(it => it.ServerId == Context.Guild.Id && it.TrackedUsers.Contains(user)).ToListAsync();
+        if (channels.Count == 0)
+        {
+            await FollowupAsync($"Not following {blueskyUser}!", ephemeral: true);
+            return;
+        }
+
+        foreach (var channel in channels)
+        {
+            channel.TrackedUsers.Remove(user);
+            dbContext.DiscordChannels.Update(channel);
+        }
+
+        if (user.TrackedInChannels.Count == 0)
+        {
+            dbContext.TrackedUsers.Remove(user);
+        }
+        else
+        {
+            dbContext.TrackedUsers.Update(user);
+        }
+
+        await dbContext.SaveChangesAsync();
+
+        var channelsString = channels.Count == 1 ? "channel" : "channels";
+        await FollowupAsync($"Unfollowed [@{blueskyUser}](<{atDid.ToBskyUri()}>) in {channels.Count} {channelsString} ", ephemeral: true);
     }
 }
