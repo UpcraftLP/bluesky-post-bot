@@ -9,8 +9,7 @@ namespace Up.Bsky.PostBot.Services.Bluesky;
 
 public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundService>
 {
-    //TODO change to 6 hours once firehose is implemented
-    private static readonly TimeSpan UpdateDelay = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan UpdateDelay = TimeSpan.FromHours(6);
 
     public FetchPostsBackgroundService(IServiceProvider serviceProvider, ILoggerFactory loggerFactory) : base(serviceProvider, loggerFactory, UpdateDelay)
     {
