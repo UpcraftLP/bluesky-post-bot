@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Bluesky;
+using Up.Bsky.PostBot.Model.Discord.DTO;
 using Up.Bsky.PostBot.Services.Discord;
 using Up.Bsky.PostBot.Util;
 
@@ -24,21 +25,23 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
         // only fetch users that are being tracked in at least 1 channel
         var users = await dbContext.TrackedUsers.Include(it => it.Posts).Where(u => u.TrackedInChannels.Count > 0).ToListAsync(cancellationToken);
 
-        var posts = (await Task.WhenAll(users.Select(async user =>
+        List<FetchPostsResponse> newPosts = new();
+        foreach (var user in users)
         {
             var latestPost = user.Posts.MinBy(it => it.CreatedAt);
-            return await fetchService.FetchPostsSince(user, latestPost?.AtUri, false, cancellationToken);
-        }))).SelectMany(it => it).ToList();
-
-        if (posts.Count == 0)
+            var posts = await fetchService.FetchPostsSince(user, latestPost?.AtUri, false, cancellationToken);
+            newPosts.AddRange(posts);
+        }
+        
+        if (newPosts.Count == 0)
         {
             Logger.LogInformation("No new posts found since last check");
             return;
         }
         
-        Logger.LogInformation("Found {Posts} new posts! Sending notifications...", posts.Count);
+        Logger.LogInformation("Found {Posts} new posts! Sending notifications...", newPosts.Count);
         
-        foreach (var response in posts)
+        foreach (var response in newPosts)
         {
             await notificationService.NotifyNewPost(response, cancellationToken);
             dbContext.SeenPosts.Update(new PostEntry
