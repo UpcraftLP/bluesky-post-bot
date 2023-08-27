@@ -65,18 +65,20 @@ public class PostNotificationService : IPostNotificationService
         
         foreach (var channel in channels)
         {
-            if (await _client.GetChannelAsync(channel.ChannelId) is not ITextChannel discordChannel)
+            if (await _client.GetChannelAsync(channel.ChannelId) is not ITextChannel textChannel)
             {
-                _logger.LogWarning("Channel {ChannelId} for guild {GuildId} not found or is not a text channel!", channel.ChannelId, channel.ServerId);
+                _logger.LogWarning("Channel {ChannelId} for guild {GuildId} not found or is not a text channel removing from database!", channel.ChannelId, channel.ServerId);
+                _dbContext.Remove(channel);
+                await _dbContext.SaveChangesAsync(cancellationToken);
                 continue;
             }
             
             // make sure webhook exists
-            var webhook = channel.WebhookId == 0 ? null : await discordChannel.GetWebhookAsync(channel.WebhookId);
+            var webhook = channel.WebhookId == 0 ? null : await textChannel.GetWebhookAsync(channel.WebhookId);
             if (webhook == null)
             {
                 _logger.LogDebug("Webhook for channel {ChannelId} not found, creating new webhook...", channel.ChannelId);
-                webhook = await discordChannel.CreateWebhookAsync(AppConstants.AppName);
+                webhook = await textChannel.CreateWebhookAsync(AppConstants.AppName);
                 channel.WebhookId = webhook.Id;
                 _dbContext.Update(channel);
                 await _dbContext.SaveChangesAsync(cancellationToken);
