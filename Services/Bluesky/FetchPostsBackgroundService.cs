@@ -50,5 +50,7 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
         }
         await dbContext.SaveChangesAsync(cancellationToken);
         Logger.LogInformation("Done!");
+
+        await scope.ServiceProvider.GetRequiredService<FirehoseListenerService>().UpdateCache(scope, cancellationToken);
     }
 }

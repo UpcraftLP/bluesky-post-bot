@@ -17,8 +17,7 @@ public static class AtIdentifierExtensions
         };
     }
 
-    public static Uri ToBskyUri(this ATIdentifier self)
-    {
-        return new Uri($"https://bsky.app/profile/{self}");
-    }
+    public static ATUri WithPath(this ATIdentifier self, string path) => ATUri.Create($"at://{self}/{path}");
+
+    public static Uri ToBskyUri(this ATIdentifier self) => new($"https://bsky.app/profile/{self}");
 }

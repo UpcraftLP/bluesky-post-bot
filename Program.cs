@@ -73,7 +73,11 @@ builder.Host.UseInteractionService((_, config) =>
 builder.Services.AddScoped<IUpdateStatusService, UpdateStatusService>();
 builder.Services.AddScoped<IPostNotificationService, PostNotificationService>();
 
+// bsky
 builder.Services.AddHostedService<FetchPostsBackgroundService>();
+builder.Services.AddHostedService<FirehoseListenerService>();
+
+// discord
 builder.Services.AddHostedService<OnlineStatusService>();
 builder.Services.AddHostedService<InteractionsService>();
 builder.Services.AddHostedService<JoinMessageService>();

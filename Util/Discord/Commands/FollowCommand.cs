@@ -89,6 +89,9 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
                 User = user,
                 CreatedAt = p.CreatedAt,
             }));
+
+            var firehose = scope.ServiceProvider.GetRequiredService<FirehoseListenerService>();
+            firehose.AddUser(user.DidObject);
         }
 
         channelDbObject.TrackedUsers.Add(user);
@@ -198,6 +201,8 @@ public class FollowCommand : InteractionModuleBase<SocketInteractionContext>
         if (user.TrackedInChannels.Count == 0)
         {
             dbContext.TrackedUsers.Remove(user);
+            var firehose = scope.ServiceProvider.GetRequiredService<FirehoseListenerService>();
+            firehose.RemoveUser(user.DidObject);
         }
         else
         {

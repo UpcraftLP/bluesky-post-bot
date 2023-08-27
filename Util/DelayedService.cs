@@ -51,5 +51,6 @@ public abstract class DelayedService<T> : IHostedService, IDisposable where T : 
     public void Dispose()
     {
         _timer?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
