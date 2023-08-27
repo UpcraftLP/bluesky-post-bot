@@ -75,7 +75,8 @@ builder.Services.AddScoped<IPostNotificationService, PostNotificationService>();
 
 // bsky
 builder.Services.AddHostedService<FetchPostsBackgroundService>();
-builder.Services.AddHostedService<FirehoseListenerService>();
+builder.Services.AddSingleton<FirehoseListenerService>();
+builder.Services.AddHostedService(serviceProvider => serviceProvider.GetRequiredService<FirehoseListenerService>());
 
 // discord
 builder.Services.AddHostedService<OnlineStatusService>();
