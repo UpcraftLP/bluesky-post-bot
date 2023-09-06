@@ -59,6 +59,7 @@ builder.Host.ConfigureDiscordHost((ctx, config) =>
         AlwaysDownloadUsers = false,
         MessageCacheSize = 50,
         GatewayIntents = GatewayIntents.Guilds,
+        UseInteractionSnowflakeDate = false,
     };
     config.LogFormat = (msg, ex) => $"{msg.Source}: {msg.Message}";
     var dcConfig = ctx.Configuration.GetSection(DiscordConfig.SectionName).Get<DiscordConfig>();
