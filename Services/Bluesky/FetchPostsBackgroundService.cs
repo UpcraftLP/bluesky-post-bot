@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using FishyFlip;
+using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Bluesky;
 using Up.Bsky.PostBot.Model.Discord.DTO;
@@ -20,6 +21,9 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
         var fetchService = scope.ServiceProvider.GetRequiredService<IFetchPostsService>();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var notificationService = scope.ServiceProvider.GetRequiredService<IPostNotificationService>();
+        
+        //TODO this is a hack to make sure we don't have an expired session when we try to fetch posts
+        await scope.ServiceProvider.GetRequiredService<ATProtocol>().RefreshSessionAsync();
 
         // only fetch users that are being tracked in at least 1 channel
         var users = await dbContext.TrackedUsers.Include(it => it.Posts).Where(u => u.TrackedInChannels.Count > 0).ToListAsync(cancellationToken);
@@ -37,7 +41,7 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
             Logger.LogInformation("No new posts found since last check");
             return;
         }
-        
+
         Logger.LogInformation("Found {Posts} new posts! Sending notifications...", newPosts.Count);
         
         foreach (var response in newPosts)

@@ -96,6 +96,9 @@ public class FirehoseListenerService : IHostedService
             RemoveUser(userDid);
             return;
         }
+        
+        //TODO this is a hack to make sure we don't have an expired session when we try to fetch posts
+        await scope.ServiceProvider.GetRequiredService<ATProtocol>().RefreshSessionAsync();
 
         foreach (var op in args.Message.Commit!.Ops!.Where(it => it.Action == "create"))
         {

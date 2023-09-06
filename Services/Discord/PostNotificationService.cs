@@ -37,7 +37,7 @@ public class PostNotificationService : IPostNotificationService
     {
         await _client.WaitForReadyAsync(cancellationToken);
         var channels = await _dbContext.DiscordChannels.Where(it => it.TrackedUsers.Contains(post.User)).ToListAsync(cancellationToken);
-        
+
         var userProfile = (await _atProto.Actor.GetProfileAsync(post.User.DidObject, cancellationToken)).HandleResult();
         if (userProfile == null)
         {
