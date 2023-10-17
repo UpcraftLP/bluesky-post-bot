@@ -32,6 +32,17 @@ builder.Services.AddSingleton<ATProtocol>(serviceProvider =>
     client.Server.CreateSessionAsync(config.LoginIdentifier, config.LoginToken).Wait();
     return client;
 });
+builder.Services.AddSingleton<ATWebSocketProtocol>(serviceProvider =>
+{
+    var config = builder.Configuration.GetSection(AtProtoConfig.SectionName).Get<AtProtoConfig>() ?? throw new Exception("No ATProto config found!");
+    var logger = serviceProvider.GetRequiredService<ILogger<ATWebSocketProtocol>>();
+    var webSocketClient = new ATWebSocketProtocolBuilder()
+        .WithInstanceUrl(new Uri(config.FirehoseUrl))
+        .WithLogger(logger)
+        .Build();
+    webSocketClient.StartSubscribeReposAsync().Wait();
+    return webSocketClient;
+});
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseLazyLoadingProxies();

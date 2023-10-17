@@ -63,13 +63,11 @@ public class FirehoseListenerService : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        var atProto = scope.ServiceProvider.GetRequiredService<ATProtocol>();
-
+        var webSocketClient = scope.ServiceProvider.GetRequiredService<ATWebSocketProtocol>();
+        
+        webSocketClient.OnSubscribedRepoMessage += HandleRepoMessage;
+        
         await UpdateCache(scope, cancellationToken);
-
-        atProto.OnSubscribedRepoMessage += HandleRepoMessage;
-
-        await atProto.StartSubscribeReposAsync(cancellationToken);
     }
 
     private async void HandleRepoMessage(object? sender, SubscribedRepoEventArgs args)
@@ -120,11 +118,12 @@ public class FirehoseListenerService : IHostedService
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public Task StopAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        var atProto = scope.ServiceProvider.GetRequiredService<ATProtocol>();
-        atProto.OnSubscribedRepoMessage -= HandleRepoMessage;
-        await atProto.StopSubscriptionAsync(cancellationToken);
+        var webSocketClient = scope.ServiceProvider.GetRequiredService<ATWebSocketProtocol>();
+        webSocketClient.OnSubscribedRepoMessage -= HandleRepoMessage;
+
+        return Task.CompletedTask;
     }
 }

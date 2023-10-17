@@ -5,7 +5,9 @@ public class AtProtoConfig
 {
     public const string SectionName = "AtProto";
 
-    public string ServiceUrl { get; set; } = "https://bsky.social";
+    public string ServiceUrl { get; set; } = "https://bsky.network";
+    
+    public string FirehoseUrl { get; set; } = "https://bsky.network";
     
     public string LoginIdentifier { get; set; } = null!;
     
