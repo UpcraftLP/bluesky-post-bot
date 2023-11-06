@@ -31,7 +31,7 @@ public class FetchPostsService : IFetchPostsService
         string? cursor = null;
         do
         {
-            var result = (await _atProto.Repo.ListPostAsync(user.DidObject, 100, cursor, true, cancellationToken)).HandleResult()!;
+            var result = (await _atProto.Repo.ListPostsAsync(user.DidObject, 100, cursor, true, cancellationToken)).HandleResult()!;
             var query = result.Records.Select(it => new {AtUri = it.Uri!, Post = (Post) it.Value!});
             if (!includeReplies)
             {
