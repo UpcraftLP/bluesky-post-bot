@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using FishyFlip.Models;
 using FishyFlip.Tools;
 using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
