@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Net;
+using FishyFlip.Models;
+using FishyFlip.Tools;
+using Microsoft.EntityFrameworkCore;
 using Up.Bsky.PostBot.Database;
 using Up.Bsky.PostBot.Model.Bluesky;
 using Up.Bsky.PostBot.Model.Discord.DTO;
@@ -28,7 +31,21 @@ public class FetchPostsBackgroundService : DelayedService<FetchPostsBackgroundSe
         foreach (var user in users)
         {
             var latestPost = user.Posts.MinBy(it => it.CreatedAt);
-            var posts = await fetchService.FetchPostsSince(user, latestPost?.AtUri, false, cancellationToken);
+            IList<FetchPostsResponse> posts;
+            try
+            {
+                posts = await fetchService.FetchPostsSince(user, latestPost?.AtUri, false, cancellationToken);
+            }
+            catch (ATNetworkErrorException e)
+            {
+                if (e.Error.StatusCode == (int) HttpStatusCode.NotFound && latestPost != null)
+                {
+                    Logger.LogDebug("Error {ErrMsg} while fetching posts, fetching ALL posts for user {User}", e.Error.Detail?.Error ?? e.Error.StatusCode.ToString(), user.DidObject);
+                    posts = await fetchService.FetchPostsSince(user, null, false, cancellationToken);
+                }
+                else throw;
+            }
+            
             newPosts.AddRange(posts);
         }
         
